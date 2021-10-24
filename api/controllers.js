@@ -36,6 +36,8 @@ module.exports = {
             expiresIn: '1h',
           });
 
+          delete user.password_hash;
+
           res.status(201).json(user);
         }
       })
@@ -58,6 +60,8 @@ module.exports = {
       user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
         expiresIn: '1h',
       });
+
+      delete user.password_hash;
 
       res.status(201).json(user);
     }
