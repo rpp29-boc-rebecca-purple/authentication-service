@@ -32,8 +32,6 @@ module.exports = {
           delete user.f4;
           delete user.f5;
 
-          console.log(user);
-
           user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
             expiresIn: '1h',
           });
@@ -54,7 +52,7 @@ module.exports = {
     }
 
     const userResult = await db.getUser(email);
-    const user = userResult.rows[0].up_user_get[0];
+    const user = userResult.rows?.[0]?.up_user_get?.[0];
 
     if (user && (await bcrypt.compare(password, user.password_hash))) {
       user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
@@ -68,6 +66,6 @@ module.exports = {
   },
 
   isAuthenticated: (req, res) => {
-    res.status(200).send('User is authenticated');
+    res.status(200).send('OK');
   },
 };

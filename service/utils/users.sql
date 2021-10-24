@@ -1,8 +1,6 @@
 create extension if not exists "uuid-ossp";
 
-
 create table if not exists users ( id varchar(100) primary key default uuid_generate_v4(), first_name varchar(50), last_name varchar(50), email varchar(100) not null, password_hash varchar(255) not null);
-
 
 create or replace function up_user_exists ( _email varchar(100)) returns boolean as $$
 
