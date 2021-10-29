@@ -72,4 +72,29 @@ module.exports = {
   isAuthenticated: (req, res) => {
     res.status(200).send('OK');
   },
+
+  changePassword: async (req, res) => {
+    const { email, oldPassword, newPassword } = req.body;
+
+    if (!email || !oldPassword || !newPassword) {
+      res.status(401).send('Provide an email, new password, and old password');
+    }
+
+    const userResult = await db.getUser(email);
+    const oldPasswordHash = userResult.rows?.[0]?.up_user_get?.[0].password_hash;
+
+    if (oldPassword && (await bcrypt.compare(oldPassword, oldPasswordHash))) {
+      let newHash = await bcrypt.hash(newPassword, 10);
+
+      const editResult = await db.editUser(email, { password_hash: newHash });
+
+      if (editResult.rowCount === 1) {
+        res.status(200).send('OK');
+      } else {
+        res.status(401).send(editResult._types.text);
+      }
+    } else {
+      res.status(401).send('Old password does not match');
+    }
+  },
 };
