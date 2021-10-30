@@ -11,9 +11,9 @@ module.exports = {
   },
 
   createUser(user, password_hash) {
-    let { email, first_name, last_name } = user;
+    let { email, first_name, last_name, username, oauth } = user;
 
-    let q = `select up_user_create('${email}', '${password_hash}', '${first_name}', '${last_name}')`;
+    let q = `select up_user_create('${email}', '${password_hash}', '${first_name}', '${last_name}', '${username}', '${oauth}')`;
 
     return pool.query(q);
   },
