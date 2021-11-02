@@ -7,6 +7,7 @@ router.post('/register', controllers.register);
 router.post('/login', controllers.login);
 router.post('/changepassword', auth, controllers.changePassword);
 router.post('/oauth/connect', controllers.oauth);
+router.post('/deactivate', auth, controllers.deactivate);
 
 router.get('/auth', auth, controllers.isAuthenticated);
 

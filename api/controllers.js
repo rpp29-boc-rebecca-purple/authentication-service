@@ -10,6 +10,7 @@ module.exports = {
 
     if (!(email && password)) {
       res.status(400).send('Both email and password are required.');
+      return;
     }
 
     db.userExists(email)
@@ -18,6 +19,7 @@ module.exports = {
 
         if (exists) {
           res.status(409).send('User already exists');
+          return;
         } else {
           const password_hash = await bcrypt.hash(password, 10);
           const userResult = await db.createUser({ ...req.body, oauth: false }, password_hash);
@@ -45,6 +47,7 @@ module.exports = {
 
     if (!(email && password)) {
       res.status(400).send('Both email and password are required.');
+      return;
     }
 
     const userResult = await db.getUser(email);
@@ -55,10 +58,21 @@ module.exports = {
         expiresIn: '3h',
       });
 
-      res.status(201).json(userFrom(user));
+      res.status(200).json(userFrom(user));
+    } else {
+      res.status(400).send('Invalid Credentials');
     }
+  },
 
-    res.status(400).send('Invalid Credentials');
+  deactivate: (req, res) => {
+    let { email } = req.body;
+    db.deactivateUser(email)
+      .then(() => {
+        res.status(200).send('OK');
+      })
+      .catch(err => {
+        res.status(400).send(err);
+      });
   },
 
   isAuthenticated: (req, res) => {

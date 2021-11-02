@@ -24,6 +24,12 @@ module.exports = {
     return pool.query(q);
   },
 
+  deactivateUser(email) {
+    let q = `select up_user_deactivate('${email}')`;
+
+    return pool.query(q);
+  },
+
   editUser(email, commands) {
     let str = '';
 
