@@ -18,7 +18,7 @@ create table users (
 
 -------------------------------------------------------------
 
-drop function up_user_exists;
+drop function if exists up_user_exists;
 create function up_user_exists ( _email varchar(100)) returns boolean as $$
 
 select
@@ -33,7 +33,7 @@ $$ language sql;
 
 -------------------------------------------------------------
 
-drop function up_user_create;
+drop function if exists up_user_create;
 create function up_user_create ( _email varchar(100), _password_hash varchar(255), _first_name varchar(100), _last_name varchar(100), _username varchar(100), _oauth boolean) returns json as $$
 
 insert into users (
@@ -58,7 +58,7 @@ $$ language sql;
 
 -------------------------------------------------------------
 
-drop function up_user_get;
+drop function if exists up_user_get;
 create function up_user_get ( _email varchar(100)) returns json as $$
 
 select
@@ -67,6 +67,15 @@ select
             row_to_json(u)
     ))
 from ( select * from users where email = _email ) u
+
+$$ language sql;
+
+-------------------------------------------------------------
+
+drop function if exists up_user_deactivate;
+create function up_user_deactivate ( _email varchar(100)) returns void as $$
+
+delete from users where email = _email
 
 $$ language sql;
 
