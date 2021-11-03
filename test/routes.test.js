@@ -3,12 +3,12 @@ const supertest = require('supertest');
 const request = supertest(app);
 const db = require('../service');
 
-let token = ''; //Used later
+let token, userId;
 
 describe('Authentication routes', () => {
   it('Should register a user', async () => {
     //Get Joe Mama out of the db if exists
-    await db.deactivateUser('joemama@email.com');
+    await db.deactivateUserByEmail('joemama@email.com');
 
     const response = await request.post('/register').send({
       first_name: 'Joe',
@@ -19,6 +19,7 @@ describe('Authentication routes', () => {
     });
 
     token = response.body.token;
+    userId = response.body.userId;
 
     expect(response.status).toBe(201);
     expect(typeof response.body === 'object').toBe(true);
@@ -61,7 +62,7 @@ describe('Authentication routes', () => {
     const response = await request
       .post('/changePassword')
       .send({
-        email: 'joemama@email.com',
+        userId,
         oldPassword: 'passw0rd',
         newPassword: 'moreSecurePassword!!',
       })
@@ -79,7 +80,7 @@ describe('Authentication routes', () => {
   });
 
   it('Should authorize a logged in user with a token', async () => {
-    const response = await request.get('/auth').set('x-access-token', token);
+    const response = await request.get('/auth').send({ userId }).set('x-access-token', token);
 
     expect(response.status).toBe(200);
   });
@@ -94,7 +95,7 @@ describe('Authentication routes', () => {
     const response = await request
       .post('/deactivate')
       .send({
-        email: 'joemama@email.com',
+        userId,
       })
       .set('x-access-token', token);
 

@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+
 const db = require('../service');
-const { userFrom, isLoggedIn } = require('./helpers');
+const { userFrom, isLoggedIn, attachToken } = require('./helpers');
 const axios = require('axios');
 
 module.exports = {
@@ -23,22 +23,16 @@ module.exports = {
         } else {
           const password_hash = await bcrypt.hash(password, 10);
           const userResult = await db.createUser({ ...req.body, oauth: false }, password_hash);
-          const user = userResult.rows[0].up_user_create;
+          const user = userFrom(userResult.rows[0].up_user_create);
 
-          user.id = user.f1;
-          user.first_name = user.f2;
-          user.last_name = user.f3;
-          user.email = user.f4;
+          attachToken(user);
 
-          user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
-            expiresIn: '3h',
-          });
-
-          res.status(201).json(userFrom(user));
+          res.status(201).json(user);
         }
       })
       .catch(err => {
         res.status(400).send(err);
+        return;
       });
   },
 
@@ -51,16 +45,13 @@ module.exports = {
     }
 
     const userResult = await db.getUserByEmail(email);
-    const user = userResult.rows?.[0]?.up_user_get_email?.[0];
+    const password_hash = userResult.rows?.[0]?.up_user_get_email?.[0].password_hash;
+    const user = userFrom(userResult.rows?.[0]?.up_user_get_email?.[0]);
 
-    console.log(userResult);
+    if (user && (await bcrypt.compare(password, password_hash))) {
+      attachToken(user);
 
-    if (user && (await bcrypt.compare(password, user.password_hash))) {
-      user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
-        expiresIn: '3h',
-      });
-
-      res.status(200).json(userFrom(user));
+      res.status(200).json(user);
     } else {
       res.status(400).send('Invalid Credentials');
     }
@@ -90,11 +81,12 @@ module.exports = {
     db.getUser(req.user.userId)
       .then(response => {
         let user = userFrom(response.rows[0].up_user_get?.[0]);
+        attachToken(user);
 
         res.status(200).send(user);
       })
       .catch(err => {
-        console.log(err);
+        console.error(err);
       });
   },
 
@@ -166,16 +158,12 @@ module.exports = {
       newUser.last_name = newUser.f3;
       newUser.email = newUser.f4;
 
-      newUser.token = jwt.sign({ userId: newUser.id, email }, process.env.TOKEN_KEY, {
-        expiresIn: '3h',
-      });
+      attachToken(newUser);
 
       res.status(201).json(userFrom(newUser));
     } else {
       // Returning Oauth sign in
-      user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
-        expiresIn: '3h',
-      });
+      attachToken(user);
 
       res.status(201).json(userFrom(user));
     }

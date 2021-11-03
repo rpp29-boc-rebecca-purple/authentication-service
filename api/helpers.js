@@ -1,17 +1,23 @@
+const jwt = require('jsonwebtoken');
+
 module.exports = {
   userFrom: u => {
+    if (!u) {
+      return;
+    }
+
     return {
-      userId: u.userId,
-      username: u.username,
-      first_name: u.first_name,
-      last_name: u.last_name,
-      email: u.email,
-      age: u.age,
-      snack: u.snack,
-      animal_type: u.animal_type,
-      follower_count: u.follower_count,
-      following_count: u.following_count,
-      oauth: u.oauth,
+      userId: u.userId || u.user_id || u.id || u.f1,
+      username: u.username || u.f2 || '',
+      firstName: u.first_name || u.f3 || '',
+      lastName: u.last_name || u.f4 || '',
+      email: u.email || u.f5,
+      age: u.age || u.f6 || null,
+      snack: u.snack || u.f7 || null,
+      animalType: u.animal_type || u.f8 || null,
+      followerCount: u.follower_count ?? u.f9,
+      followingCount: u.following_count ?? u.f10,
+      oauth: u.oauth ?? u.f11,
       token: u.token,
     };
   },
@@ -21,5 +27,11 @@ module.exports = {
       return true;
     }
     return false;
+  },
+
+  attachToken: user => {
+    user.token = jwt.sign({ userId: user.userId, email: user.email, username: user.username }, process.env.TOKEN_KEY, {
+      expiresIn: '120000', //1200 seconds (20 minutes)
+    });
   },
 };

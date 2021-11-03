@@ -4,7 +4,7 @@ drop table if exists friendship;
 drop table if exists users;
 
 create table users ( 
-    userId serial unique,
+    user_id serial unique,
     username varchar not null unique,
     first_name varchar, 
     last_name varchar, 
@@ -20,14 +20,14 @@ create table users (
 );
 
 create table friendship (
-  friendshipId serial unique,
-  userEmail varchar,
-  friendEmail varchar,
-  CreatedDateTime timestamp,
-  constraint fk_friendship primary key (userEmail, friendEmail),
-  constraint fk_user foreign key (userEmail) references users(email)
+  friendship_id serial unique,
+  user_email varchar,
+  friend_email varchar,
+  created_date_time timestamp,
+  constraint fk_friendship primary key (user_email, friend_email),
+  constraint fk_user foreign key (user_email) references users(email)
   on delete cascade on update cascade,
-  constraint fk_friend foreign key (friendEmail) references users(email)
+  constraint fk_friend foreign key (friend_email) references users(email)
   on delete cascade on update cascade
 );
 
@@ -38,7 +38,7 @@ create function up_user_exists ( _email varchar) returns boolean as $$
 
 select
     (case
-        when count(userId) >= 1 then true
+        when count(user_id) >= 1 then true
         else false
     end) as exists
 from users
@@ -67,7 +67,7 @@ values (
     _username,
     _oauth
 )
-returning row_to_json(row(userId, first_name, last_name, email, password_hash));
+returning row_to_json(row(user_id, username, first_name, last_name, email, age, snack, animal_type, follower_count, following_count, oauth));
 
 $$ language sql;
 
@@ -81,7 +81,7 @@ select
         array_agg(
             row_to_json(u)
     ))
-from ( select * from users where userId = _userId ) u
+from ( select * from users where user_id = _userId ) u
 
 $$ language sql;
 
@@ -104,7 +104,7 @@ $$ language sql;
 drop function if exists up_user_deactivate;
 create function up_user_deactivate ( _userId int) returns void as $$
 
-delete from users where userId = _userId
+delete from users where user_id = _userId
 
 $$ language sql;
 
