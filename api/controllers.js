@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../service');
-const { userFrom } = require('./helpers');
+const { userFrom, isLoggedIn } = require('./helpers');
 const axios = require('axios');
 
 module.exports = {
@@ -30,7 +30,7 @@ module.exports = {
           user.last_name = user.f3;
           user.email = user.f4;
 
-          user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
+          user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
             expiresIn: '3h',
           });
 
@@ -50,11 +50,13 @@ module.exports = {
       return;
     }
 
-    const userResult = await db.getUser(email);
-    const user = userResult.rows?.[0]?.up_user_get?.[0];
+    const userResult = await db.getUserByEmail(email);
+    const user = userResult.rows?.[0]?.up_user_get_email?.[0];
+
+    console.log(userResult);
 
     if (user && (await bcrypt.compare(password, user.password_hash))) {
-      user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
+      user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
         expiresIn: '3h',
       });
 
@@ -65,8 +67,13 @@ module.exports = {
   },
 
   deactivate: (req, res) => {
-    let { email } = req.body;
-    db.deactivateUser(email)
+    let { userId } = req.body;
+
+    if (!isLoggedIn(req)) {
+      res.status(403).send('User credentials do not match access token');
+    }
+
+    db.deactivateUser(userId)
       .then(() => {
         res.status(200).send('OK');
       })
@@ -75,18 +82,34 @@ module.exports = {
       });
   },
 
-  isAuthenticated: (req, res) => {
-    res.status(200).send('OK');
+  authentication: (req, res) => {
+    if (!isLoggedIn(req)) {
+      res.status(403).send('User credentials do not match access token');
+    }
+
+    db.getUser(req.user.userId)
+      .then(response => {
+        let user = userFrom(response.rows[0].up_user_get?.[0]);
+
+        res.status(200).send(user);
+      })
+      .catch(err => {
+        console.log(err);
+      });
   },
 
   changePassword: async (req, res) => {
-    const { email, oldPassword, newPassword } = req.body;
+    const { userId, oldPassword, newPassword } = req.body;
 
-    if (!email || !oldPassword || !newPassword) {
-      res.status(401).send('Provide an email, new password, and old password');
+    if (!userId || !oldPassword || !newPassword) {
+      res.status(401).send('Provide a user id, new password, and old password');
     }
 
-    const userResult = await db.getUser(email);
+    if (!isLoggedIn(req)) {
+      res.status(403).send('User credentials do not match access token');
+    }
+
+    const userResult = await db.getUser(userId);
     const user = userResult.rows?.[0]?.up_user_get?.[0];
     const oldPasswordHash = user.password_hash;
 
@@ -97,7 +120,7 @@ module.exports = {
     if (oldPassword && (await bcrypt.compare(oldPassword, oldPasswordHash))) {
       let newHash = await bcrypt.hash(newPassword, 10);
 
-      const editResult = await db.editUser(email, { password_hash: newHash });
+      const editResult = await db.editUser(userId, { password_hash: newHash });
 
       if (editResult.rowCount === 1) {
         res.status(200).send('OK');
@@ -120,7 +143,7 @@ module.exports = {
     }
 
     const { email, given_name: first_name, family_name: last_name } = profileResponse.data;
-    const userResult = await db.getUser(email);
+    const userResult = await db.getUser(userId);
     const user = userResult.rows?.[0]?.up_user_get?.[0];
 
     // New OAuth sign in
@@ -143,14 +166,14 @@ module.exports = {
       newUser.last_name = newUser.f3;
       newUser.email = newUser.f4;
 
-      newUser.token = jwt.sign({ user_id: newUser.id, email }, process.env.TOKEN_KEY, {
+      newUser.token = jwt.sign({ userId: newUser.id, email }, process.env.TOKEN_KEY, {
         expiresIn: '3h',
       });
 
       res.status(201).json(userFrom(newUser));
     } else {
       // Returning Oauth sign in
-      user.token = jwt.sign({ user_id: user.id, email }, process.env.TOKEN_KEY, {
+      user.token = jwt.sign({ userId: user.id, email }, process.env.TOKEN_KEY, {
         expiresIn: '3h',
       });
 
