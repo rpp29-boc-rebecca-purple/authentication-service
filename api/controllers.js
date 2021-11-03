@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 
 const db = require('../service');
-const { userFrom, isLoggedIn, attachToken } = require('./helpers');
+const { userFrom, isLoggedIn, issueToken } = require('./helpers');
 const axios = require('axios');
 
 module.exports = {
@@ -25,7 +25,7 @@ module.exports = {
           const userResult = await db.createUser({ ...req.body, oauth: false }, password_hash);
           const user = userFrom(userResult.rows[0].up_user_create);
 
-          attachToken(user);
+          issueToken(user);
 
           res.status(201).json(user);
         }
@@ -49,7 +49,7 @@ module.exports = {
     const user = userFrom(userResult.rows?.[0]?.up_user_get_email?.[0]);
 
     if (user && (await bcrypt.compare(password, password_hash))) {
-      attachToken(user);
+      issueToken(user);
 
       res.status(200).json(user);
     } else {
@@ -81,7 +81,7 @@ module.exports = {
     db.getUser(req.user.userId)
       .then(response => {
         let user = userFrom(response.rows[0].up_user_get?.[0]);
-        attachToken(user);
+        issueToken(user);
 
         res.status(200).send(user);
       })
@@ -158,12 +158,12 @@ module.exports = {
       newUser.last_name = newUser.f3;
       newUser.email = newUser.f4;
 
-      attachToken(newUser);
+      issueToken(newUser);
 
       res.status(201).json(userFrom(newUser));
     } else {
       // Returning Oauth sign in
-      attachToken(user);
+      issueToken(user);
 
       res.status(201).json(userFrom(user));
     }

@@ -29,7 +29,7 @@ module.exports = {
     return false;
   },
 
-  attachToken: user => {
+  issueToken: user => {
     user.token = jwt.sign({ userId: user.userId, email: user.email, username: user.username }, process.env.TOKEN_KEY, {
       expiresIn: '120000', //1200 seconds (20 minutes)
     });
