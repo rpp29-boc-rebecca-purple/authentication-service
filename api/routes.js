@@ -9,6 +9,6 @@ router.post('/changepassword', auth, controllers.changePassword);
 router.post('/oauth/connect', controllers.oauth);
 router.post('/deactivate', auth, controllers.deactivate);
 
-router.get('/auth', auth, controllers.isAuthenticated);
+router.get('/auth', auth, controllers.authentication);
 
 module.exports = router;

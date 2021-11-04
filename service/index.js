@@ -18,19 +18,33 @@ module.exports = {
     return pool.query(q);
   },
 
-  getUser(email) {
-    let q = `select up_user_get('${email}')`;
+  getUser(userId) {
+    let q = `select up_user_get(${userId})`;
 
     return pool.query(q);
   },
 
-  deactivateUser(email) {
-    let q = `select up_user_deactivate('${email}')`;
+  getUserByEmail(email) {
+    let q = `select up_user_get_email('${email}')`;
 
     return pool.query(q);
   },
 
-  editUser(email, commands) {
+  deactivateUser(userId) {
+    let q = `select up_user_deactivate(${userId})`;
+
+    return pool.query(q);
+  },
+
+  deactivateUserByEmail(email) {
+    this.getUserByEmail(email).then(res => {
+      if (!!res.rows[0].up_user_get_email?.[0].user_id) {
+        this.deactivateUser(res.rows[0].up_user_get_email?.[0].user_id);
+      }
+    });
+  },
+
+  editUser(userId, commands) {
     let str = '';
 
     for (let key in commands) {
@@ -45,7 +59,7 @@ module.exports = {
     update users
       set ${str.slice(0, -1)}
     where
-      email = '${email}'
+      user_id = ${userId}
     `;
 
     return pool.query(q);
