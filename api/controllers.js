@@ -135,8 +135,8 @@ module.exports = {
     }
 
     const { email, given_name: first_name, family_name: last_name } = profileResponse.data;
-    const userResult = await db.getUser(userId);
-    const user = userResult.rows?.[0]?.up_user_get?.[0];
+    const userResult = await db.getUserByEmail(email);
+    const user = userResult.rows?.[0]?.up_user_get_email?.[0];
 
     // New OAuth sign in
     if (!user) {
