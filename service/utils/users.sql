@@ -19,16 +19,16 @@ create table users (
     password_hash varchar not null
 );
 
-create table friendship (
-  friendship_id serial unique,
-  user_email varchar,
-  friend_email varchar,
-  created_date_time timestamp,
-  constraint fk_friendship primary key (user_email, friend_email),
-  constraint fk_user foreign key (user_email) references users(email)
-  on delete cascade on update cascade,
-  constraint fk_friend foreign key (friend_email) references users(email)
-  on delete cascade on update cascade
+CREATE TABLE friendship (
+  friendshipId SERIAL UNIQUE,
+  user_id INT,
+  friend_id INT,
+  CreatedDateTime TIMESTAMP,
+  CONSTRAINT fk_friendship PRIMARY KEY (user_id, friend_id),
+  CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+  ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_friend FOREIGN KEY (friend_id) REFERENCES users(user_id)
+  ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -------------------------------------------------------------
