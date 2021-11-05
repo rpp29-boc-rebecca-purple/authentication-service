@@ -55,7 +55,7 @@ describe('Authentication routes', () => {
       password: 'passWORD',
     });
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(401);
   });
 
   it('Should change password of existing user', async () => {

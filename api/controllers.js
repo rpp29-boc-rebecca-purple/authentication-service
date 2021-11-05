@@ -53,7 +53,7 @@ module.exports = {
 
       res.status(200).json(user);
     } else {
-      res.status(400).send('Invalid Credentials');
+      res.status(401).send('Invalid Credentials');
     }
   },
 
